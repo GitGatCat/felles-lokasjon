@@ -18,15 +18,25 @@ def samlokalisert(in_filename):
   wb = openpyxl.load_workbook(in_filename)
   ws = wb.active
   locations = {}
-  for row in ws.iter_rows():    
+
+  # table in xlsx not found in ws.tables.values(), magic?
+  for i, row in enumerate(ws.iter_rows()):
+    if not row[LOK_NR].value or row[LOK_NR].value in ["", '', "LOK_NR"]:
+      continue
+    start_row = i
+    break
+  
+  if not start_row:
+    print("failed")
+    exit(1)
+
+  for row in ws.iter_rows(min_row = start_row):    
     org = row[ORG_NR].value
-    lok = row[LOK_NR].value
-    if not str(org).isnumeric():
-      # simple row integrity check
-      continue 
+    lok = row[LOK_NR].value 
     if lok not in locations:
       locations[lok] = set()
     locations[lok].add(org)
+
   colocations = { lok_nr for (lok_nr, v) in locations.items() if len(v) >= 2}      
 
   # list lokasjoner som er knyttet til samlokalisering
@@ -41,7 +51,8 @@ def samlokalisert(in_filename):
     else:
       ws2.append(values)
 
-  dims = "A" + str(ws2.min_row) + ":Y" + str(ws2.max_row)  
+  get_column_letter = openpyxl.utils.cell.get_column_letter
+  dims = get_column_letter(ws2.min_column) + str(start_row) + ":" + get_column_letter(ws2.max_column) + str(ws2.max_row) 
   table = Table(ref=dims, displayName='samlokasjon')
   ws2.add_table(table)
 
