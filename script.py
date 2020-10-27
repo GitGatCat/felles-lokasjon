@@ -11,10 +11,11 @@ index_values = ['TILL_NR', 'ORG.NR/PERS.NR', 'NAVN', 'ADRESSE', 'POSTNR', 'POSTS
 
 #  row sub index for data 
 ORG_NR = 1
+ORG_NAVN = 2
 LOK_NR = 15
 
    
-def samlokalisert(in_filename):
+def felles_lokasjon(in_filename):
   wb = openpyxl.load_workbook(in_filename)
   ws = wb.active
   locations = {}
@@ -39,8 +40,13 @@ def samlokalisert(in_filename):
 
   colocations = { lok_nr for (lok_nr, v) in locations.items() if len(v) >= 2}      
 
-  # list lokasjoner som er knyttet til samlokalisering
-  ws2 = wb.create_sheet("Samlokasjoner")
+  for v, k in locations.items():
+    if len(k) >= 2:
+      print(v, k)
+  print(len(colocations))
+
+  # list lokasjoner som er knyttet til felles_lokasjon
+  ws2 = wb.create_sheet("felles_lokasjon")
   for row in ws.iter_rows():
     values = [cell.value for cell in row]
     if row[LOK_NR].value and row[LOK_NR].value.isnumeric():
@@ -53,12 +59,12 @@ def samlokalisert(in_filename):
 
   get_column_letter = openpyxl.utils.cell.get_column_letter
   dims = get_column_letter(ws2.min_column) + str(start_row) + ":" + get_column_letter(ws2.max_column) + str(ws2.max_row) 
-  table = Table(ref=dims, displayName='samlokasjon')
+  table = Table(ref=dims, displayName='felles_lokasjon')
   ws2.add_table(table)
 
 
-  # list org_nr som driver samlokalisering i ark 3, separert med ';'
-  ws3 = wb.create_sheet("Samlokaliserte ORG-NR")
+  # list org_nr som driver felles_lokasjon i ark 3, separert med ';'
+  ws3 = wb.create_sheet("felles_lokasjon ORG-NR")
   unique_orgs = {org for org in chain.from_iterable(locations.values())}
   text = ""
   for org in unique_orgs:
@@ -70,7 +76,7 @@ def samlokalisert(in_filename):
 if __name__ == "__main__":
   if len(sys.argv) == 2:
     in_filename = sys.argv[1]
-    samlokalisert(in_filename)  
+    felles_lokasjon(in_filename)  
   else:
     print("brukes som \"python3 script.py in_data.xlsx\"")
 
